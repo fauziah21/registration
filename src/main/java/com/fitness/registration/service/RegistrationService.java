@@ -4,6 +4,7 @@ import com.fitness.registration.model.*;
 import com.fitness.registration.repository.AccountRepository;
 import com.fitness.registration.repository.OtpRepository;
 
+import com.fitness.registration.repository.RolesRepository;
 import com.fitness.registration.response.BaseResponse;
 import com.fitness.registration.utils.SendOTPUtils;
 import jakarta.mail.MessagingException;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class RegistrationService {
@@ -23,12 +26,16 @@ public class RegistrationService {
     private AccountRepository accountRepository;
     @Autowired
     private SendOTPUtils sendOTPUtils;
+    @Autowired
+    private RolesRepository roleRepository;
+    @Autowired
+    private
+    OtpRepository otpRepository;
 
     public static int SEND_OTP_SUCCESS = 0;
     public static int FAILED_MAX_RETRY = 1;
     public static int FAILED_SEND_OTP = 2;
-    @Autowired
-    private OtpRepository otpRepository;
+
 
     @Transactional
     public BaseResponse createAccount(String accountName, String accountEmail, String accountPassword, String accountPhone,
@@ -79,6 +86,10 @@ public class RegistrationService {
         YearMonth expDate = YearMonth.parse(accountCardExp);
         LocalDate cardExp = expDate.atDay(1);
 
+        Set<Role> roles = new HashSet<>();
+        Role role = roleRepository.findByName(ERole.ROLE_USER).get();
+        roles.add(role);
+
         AccountModel accountModel = new AccountModel();
         accountModel.setAccountName(accountName);
         accountModel.setAccountEmail(accountEmail);
@@ -91,6 +102,7 @@ public class RegistrationService {
         accountModel.setAccountStatus("BELUM TERVALIDASI");
         accountModel.setCreatedAt(LocalDateTime.now());
         accountModel.setUpdatedAt(LocalDateTime.now());
+        accountModel.setRoles(roles);
         accountRepository.save(accountModel);
 
         response.setCode("000");
